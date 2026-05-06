@@ -1,13 +1,17 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from aiokafka import AIOKafkaProducer
 import asyncio
 import json
 
-# accepts orders view REST, publishes to KafKa
-
-
-
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 producer = None
 

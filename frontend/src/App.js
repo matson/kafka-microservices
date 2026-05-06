@@ -1,25 +1,38 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from 'react';                                             
+  import './App.css';
+                                                                                
+  function App() {     
+    const [item, setItem] = useState('');
+    const [quantity, setQuantity] = useState(1);                                
+    const [status, setStatus] = useState(null);
+                                                                                
+    const submitOrder = async () => {                                           
+      const response = await fetch('http://localhost:8000/orders', {
+        method: 'POST',                                                         
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item, quantity }),                               
+      });
+      const data = await response.json();                                       
+      setStatus(data.status);
+    };
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+    return (
+      <div style={{ padding: '2rem' }}>
+        <h1>Order System</h1>                                                   
+        <input
+          placeholder="Item"                                                    
+          value={item} 
+          onChange={(e) => setItem(e.target.value)}                             
+        />
+        <input                                                                  
+          type="number"
+          value={quantity}
+          onChange={(e) => setQuantity(Number(e.target.value))}
+        />                                                                      
+        <button onClick={submitOrder}>Place Order</button>
+        {status && <p>Status: {status}</p>}                                     
+      </div>           
+    );
+  }
 
-export default App;
+  export default App;   
