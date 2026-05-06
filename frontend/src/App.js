@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import edamame from './images/edamame.webp';
 import hamachiNigiri from './images/hamachi-nigiri.png';
@@ -19,6 +19,20 @@ const MENU = [
 function App() {
   const [quantities, setQuantities] = useState({});
   const [status, setStatus] = useState(null);
+  const [orderHistory, setOrderHistory] = useState([]);
+  const wsRef = useRef(null);
+
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8001/ws');
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      const order = JSON.parse(event.data);
+      setOrderHistory((prev) => [{ ...order, time: new Date().toLocaleTimeString() }, ...prev]);
+    };
+
+    return () => ws.close();
+  }, []);
 
   const updateQuantity = (id, delta) => {
     setQuantities((prev) => ({
@@ -74,6 +88,27 @@ function App() {
           Place Order
         </button>
         {status && <p className="status">{status}</p>}
+      </div>
+
+      <div className="history">
+        <h2 className="history-title">Order History</h2>
+        {orderHistory.length === 0 ? (
+          <p className="history-empty">No orders yet</p>
+        ) : (
+          orderHistory.map((order, i) => (
+            <div key={i} className="history-item">
+              <span className="history-time">{order.time}</span>
+              <div className="history-items">
+                {order.items
+                  ? order.items.map((it, j) => (
+                      <span key={j}>{it.item} x{it.quantity}</span>
+                    ))
+                  : <span>{JSON.stringify(order)}</span>
+                }
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
