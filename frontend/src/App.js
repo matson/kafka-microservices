@@ -1,38 +1,82 @@
-import { useState } from 'react';                                             
-  import './App.css';
-                                                                                
-  function App() {     
-    const [item, setItem] = useState('');
-    const [quantity, setQuantity] = useState(1);                                
-    const [status, setStatus] = useState(null);
-                                                                                
-    const submitOrder = async () => {                                           
-      const response = await fetch('http://localhost:8000/orders', {
-        method: 'POST',                                                         
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item, quantity }),                               
-      });
-      const data = await response.json();                                       
-      setStatus(data.status);
-    };
+import { useState } from 'react';
+import './App.css';
+import edamame from './images/edamame.webp';
+import hamachiNigiri from './images/hamachi-nigiri.png';
+import misoSoup from './images/miso-soup.jpg';
+import salmonNigiri from './images/salmon-nigiri.jpeg';
+import spicyTemaki from './images/spicy-temaki.webp';
+import mochiAssorted from './images/mochi-assorted.jpg';
 
-    return (
-      <div style={{ padding: '2rem' }}>
-        <h1>Order System</h1>                                                   
-        <input
-          placeholder="Item"                                                    
-          value={item} 
-          onChange={(e) => setItem(e.target.value)}                             
-        />
-        <input                                                                  
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-        />                                                                      
-        <button onClick={submitOrder}>Place Order</button>
-        {status && <p>Status: {status}</p>}                                     
-      </div>           
-    );
-  }
+const MENU = [
+  { id: 'edamame', name: 'Edamame', price: 5, image: edamame },
+  { id: 'hamachi-nigiri', name: 'Hamachi Nigiri', price: 8, image: hamachiNigiri },
+  { id: 'miso-soup', name: 'Miso Soup', price: 4, image: misoSoup },
+  { id: 'salmon-nigiri', name: 'Salmon Nigiri', price: 8, image: salmonNigiri },
+  { id: 'spicy-temaki', name: 'Spicy Temaki', price: 9, image: spicyTemaki },
+  { id: 'mochi-assorted', name: 'Mochi Assorted', price: 7, image: mochiAssorted },
+];
 
-  export default App;   
+function App() {
+  const [quantities, setQuantities] = useState({});
+  const [status, setStatus] = useState(null);
+
+  const updateQuantity = (id, delta) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [id]: Math.max(0, (prev[id] || 0) + delta),
+    }));
+  };
+
+  const submitOrder = async () => {
+    const items = MENU
+      .filter((item) => quantities[item.id] > 0)
+      .map((item) => ({ item: item.name, quantity: quantities[item.id] }));
+
+    if (items.length === 0) return;
+
+    const response = await fetch('http://localhost:8000/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    const data = await response.json();
+    setStatus(data.status);
+    setQuantities({});
+  };
+
+  const total = MENU.reduce(
+    (sum, item) => sum + (quantities[item.id] || 0) * item.price,
+    0
+  );
+
+  return (
+    <div className="container">
+      <h1 className="title">Sushi Order</h1>
+      <div className="menu">
+        {MENU.map((item) => (
+          <div key={item.id} className="card">
+            <img src={item.image} alt={item.name} className="card-image" />
+            <div className="card-body">
+              <h2 className="card-name">{item.name}</h2>
+              <p className="card-price">${item.price}</p>
+              <div className="quantity-control">
+                <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                <span>{quantities[item.id] || 0}</span>
+                <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="footer">
+        <p className="total">Total: ${total}</p>
+        <button className="order-btn" onClick={submitOrder}>
+          Place Order
+        </button>
+        {status && <p className="status">{status}</p>}
+      </div>
+    </div>
+  );
+}
+
+export default App;
