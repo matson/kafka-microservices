@@ -23,6 +23,17 @@ function App() {
   const wsRef = useRef(null);
 
   useEffect(() => {
+    fetch('http://localhost:8001/orders/history')
+      .then((res) => res.json())
+      .then((data) => {
+        setOrderHistory(data.map((row) => ({
+          items: row.items,
+          time: new Date(row.created_at).toLocaleTimeString(),
+        })));
+      });
+  }, []);
+
+  useEffect(() => {
     const ws = new WebSocket('ws://localhost:8001/ws');
     wsRef.current = ws;
 
